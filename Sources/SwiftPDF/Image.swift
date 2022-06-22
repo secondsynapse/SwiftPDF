@@ -21,7 +21,7 @@ public extension PDF {
             fatalError()
         }
 
-        public var desiredSize: CGSize {
+        public func desiredSize(boundedBy bound: CGSize) -> CGSize {
             from.size
         }
 

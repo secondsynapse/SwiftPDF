@@ -22,10 +22,12 @@ public extension PDF {
             fatalError()
         }
 
-        public var desiredSize: CGSize {
+        public func desiredSize(boundedBy bound: CGSize) -> CGSize {
             items.reduce(CGSize(width: 0, height: CGFloat.infinity)) { partialResult, item in
                 CGSize(
-                    width: partialResult.width + item.desiredSize.width,
+                    width: partialResult.width + item.desiredSize(
+                        boundedBy: CGSize(width: bound.width - partialResult.width, height: bound.height)
+                    ).width,
                     height: .infinity
                 )
             }
@@ -34,24 +36,23 @@ public extension PDF {
         public func draw(in context: UIGraphicsPDFRendererContext, rect: CGRect) {
             let numberOfValidItems = items
                 .filter {
-                    $0.desiredSize.width != 0
+                    $0.desiredSize(boundedBy: rect.size).width != 0
                 }
                 .count
 
             let numberOfFlexibleItems = items
                 .filter {
-                    $0.desiredSize.width == .infinity
+                    $0.desiredSize(boundedBy: rect.size).width == .infinity
                 }
                 .count
 
             let totalDesiredWidth = items
                 .filter {
-                    $0.desiredSize.width != .infinity && $0.desiredSize.width != 0
+                    $0.desiredSize(boundedBy: rect.size).width != .infinity && $0.desiredSize(boundedBy: rect.size).width != 0
                 }
-                .map {
-                    $0.desiredSize.width
-                }
-                .reduce(0, +)
+                .reduce(0, { partialResult, item in
+                    partialResult + item.desiredSize(boundedBy: CGSize(width: rect.width - partialResult, height: rect.height)).width
+                })
 
             let naturalWidth = (rect.width - totalDesiredWidth) / CGFloat(numberOfFlexibleItems) - (CGFloat(max(numberOfValidItems - 1, 0)) * spacing)
 
@@ -61,7 +62,11 @@ public extension PDF {
                 let itemRect = CGRect(
                     x: startingX,
                     y: rect.origin.y,
-                    width: item.desiredSize.width == .infinity ? naturalWidth : item.desiredSize.width,
+                    width: item.desiredSize(
+                        boundedBy: CGSize(width: rect.width - (startingX - rect.minX), height: rect.height)
+                    ).width == .infinity ? naturalWidth : item.desiredSize(
+                        boundedBy: CGSize(width: rect.width - (startingX - rect.minX), height: rect.height)
+                    ).width,
                     height: rect.height
                 )
 

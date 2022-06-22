@@ -16,7 +16,7 @@ public extension PDF {
             self.content = content()
         }
 
-        public var desiredSize: CGSize {
+        public func desiredSize(boundedBy bound: CGSize) -> CGSize {
             CGSize(width: CGFloat.infinity, height: .infinity)
         }
 

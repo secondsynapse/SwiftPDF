@@ -26,7 +26,7 @@ public extension PDF {
             fatalError()
         }
 
-        public var desiredSize: CGSize {
+        public func desiredSize(boundedBy bound: CGSize) -> CGSize {
             CGSize(width: CGFloat.infinity, height: .infinity)
         }
 

@@ -24,8 +24,25 @@ public extension PDF {
             fatalError()
         }
 
-        public var desiredSize: CGSize {
-            CGSize(width: CGFloat.infinity, height: .infinity)
+        public func desiredSize(boundedBy bound: CGSize) -> CGSize {
+            var runningWidth: CGFloat = 0
+            var runningHeight: CGFloat = 0
+            var maxRowHeight: CGFloat = 0
+
+            for item in items {
+                let itemSize = item.desiredSize(boundedBy: CGSize(width: bound.width - runningWidth, height: bound.height))
+
+                if bound.width - runningWidth < itemSize.width && runningWidth != 0 {
+                    runningWidth = 0
+                    runningHeight += maxRowHeight + verticalSpacing
+                    maxRowHeight = 0
+                }
+
+                runningWidth += itemSize.width + horizontalSpacing
+                maxRowHeight = max(maxRowHeight, itemSize.height)
+            }
+
+            return CGSize(width: bound.width, height: runningHeight + maxRowHeight)
         }
 
         public func draw(in context: UIGraphicsPDFRendererContext, rect: CGRect) {
@@ -34,7 +51,7 @@ public extension PDF {
             var maxRowHeight: CGFloat = 0
 
             for item in items {
-                let itemSize = item.desiredSize
+                let itemSize = item.desiredSize(boundedBy: CGSize(width: rect.width - runningWidth, height: rect.height))
 
                 if rect.width - runningWidth < itemSize.width && runningWidth != 0 {
                     runningWidth = 0
