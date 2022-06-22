@@ -41,27 +41,11 @@ public extension PDF {
             return NSAttributedString(string: value, attributes: textAttributes)
         }
 
-        public var desiredSize: CGSize {
+        public func desiredSize(boundedBy bound: CGSize) -> CGSize {
             attributedText.boundingRect(
-                with: .zero,
+                with: CGSize(width: bound.width, height: .zero),
                 context: nil
             ).size
-        }
-
-        func desiredRect(in rect: CGRect) -> CGRect {
-            let size = attributedText.boundingRect(
-                with: .zero,
-                context: nil
-            )
-
-            let desiredRect = CGRect(
-                x: rect.origin.x,
-                y: rect.origin.y,
-                width: size.width,
-                height: size.height
-            )
-
-            return desiredRect
         }
 
         public func draw(in context: UIGraphicsPDFRendererContext, rect: CGRect) {

@@ -22,11 +22,13 @@ public extension PDF {
             fatalError()
         }
 
-        public var desiredSize: CGSize {
-            items.reduce(CGSize(width: CGFloat.infinity, height: 0)) { partialResult, item in
+        public func desiredSize(boundedBy bound: CGSize) -> CGSize {
+            items.reduce(CGSize(width: 0, height: CGFloat.infinity)) { partialResult, item in
                 CGSize(
                     width: .infinity,
-                    height: partialResult.height + item.desiredSize.height
+                    height: partialResult.height + item.desiredSize(
+                        boundedBy: CGSize(width: bound.width, height: bound.height - partialResult.height)
+                    ).width
                 )
             }
         }
@@ -34,24 +36,23 @@ public extension PDF {
         public func draw(in context: UIGraphicsPDFRendererContext, rect: CGRect) {
             let numberOfValidItems = items
                 .filter {
-                    $0.desiredSize.height != 0
+                    $0.desiredSize(boundedBy: rect.size).height != 0
                 }
                 .count
 
             let numberOfFlexibleItems = items
                 .filter {
-                    $0.desiredSize.height == .infinity
+                    $0.desiredSize(boundedBy: rect.size).height == .infinity
                 }
                 .count
 
             let totalDesiredHeight = items
                 .filter {
-                    $0.desiredSize.height != .infinity && $0.desiredSize.height != 0
+                    $0.desiredSize(boundedBy: rect.size).height != .infinity && $0.desiredSize(boundedBy: rect.size).height != 0
                 }
-                .map {
-                    $0.desiredSize.height
-                }
-                .reduce(0, +)
+                .reduce(0, { partialResult, item in
+                    partialResult + item.desiredSize(boundedBy: CGSize(width: rect.height, height: rect.width - partialResult)).height
+                })
 
             let naturalHeight = (rect.height - totalDesiredHeight) / CGFloat(numberOfFlexibleItems) - (CGFloat(max(numberOfValidItems - 1, 0)) * spacing)
 
@@ -62,7 +63,11 @@ public extension PDF {
                     x: rect.origin.x,
                     y: startingY,
                     width: rect.width,
-                    height: item.desiredSize.height == .infinity ? naturalHeight : item.desiredSize.height
+                    height: item.desiredSize(
+                        boundedBy: CGSize(width: rect.width, height: rect.height - (startingY - rect.minY))
+                    ).height == .infinity ? naturalHeight : item.desiredSize(
+                        boundedBy: CGSize(width: rect.width, height: rect.height - (startingY - rect.minY))
+                    ).height
                 )
 
                 item.draw(in: context, rect: itemRect)

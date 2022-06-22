@@ -13,14 +13,13 @@ public protocol Drawable {
 
     var body: Body { get }
 
-    var desiredSize: CGSize { get }
-
+    func desiredSize(boundedBy bound: CGSize) -> CGSize
     func draw(in context: UIGraphicsPDFRendererContext, rect: CGRect)
 }
 
 public extension Drawable {
-    var desiredSize: CGSize {
-        body.desiredSize
+    func desiredSize(boundedBy bound: CGSize) -> CGSize {
+        body.desiredSize(boundedBy: bound)
     }
 
     func draw(in context: UIGraphicsPDFRendererContext, rect: CGRect) {
@@ -29,7 +28,7 @@ public extension Drawable {
 }
 
 extension Never: Drawable {
-    public var desiredSize: CGSize {
+    public func desiredSize(boundedBy bound: CGSize) -> CGSize {
         .zero
     }
 
@@ -47,22 +46,24 @@ public struct PDF {}
 public extension PDF {
     struct AnyDrawable: Drawable {
         var _draw: (UIGraphicsPDFRendererContext, CGRect) -> Void
-        var _desiredSize: CGSize
+        var _desiredSize: (CGSize) -> CGSize
 
         public init<D>(_ drawable: D) where D : Drawable {
             self._draw = {
                 drawable.draw(in: $0, rect: $1)
             }
 
-            self._desiredSize = drawable.desiredSize
+            self._desiredSize = {
+                drawable.desiredSize(boundedBy: $0)
+            }
         }
 
         public var body: Never {
             fatalError()
         }
 
-        public var desiredSize: CGSize {
-            self._desiredSize
+        public func desiredSize(boundedBy bound: CGSize) -> CGSize {
+            self._desiredSize(bound)
         }
 
         public func draw(in context: UIGraphicsPDFRendererContext, rect: CGRect) {
@@ -88,10 +89,10 @@ public extension PDF {
             fatalError()
         }
 
-        public var desiredSize: CGSize {
+        public func desiredSize(boundedBy bound: CGSize) -> CGSize {
             CGSize(
-                width: content.desiredSize.width + margins.left + margins.right,
-                height: content.desiredSize.height + margins.top + margins.bottom
+                width: content.desiredSize(boundedBy: bound).width + margins.left + margins.right,
+                height: content.desiredSize(boundedBy: bound).height + margins.top + margins.bottom
             )
         }
 
@@ -129,8 +130,8 @@ public extension PDF {
             fatalError()
         }
 
-        public var desiredSize: CGSize {
-            content.desiredSize
+        public func desiredSize(boundedBy bound: CGSize) -> CGSize {
+            content.desiredSize(boundedBy: bound)
         }
 
         public func draw(in context: UIGraphicsPDFRendererContext, rect: CGRect) {
@@ -157,8 +158,8 @@ public extension PDF {
             fatalError()
         }
 
-        public var desiredSize: CGSize {
-            content.desiredSize
+        public func desiredSize(boundedBy bound: CGSize) -> CGSize {
+            content.desiredSize(boundedBy: bound)
         }
 
         public func draw(in context: UIGraphicsPDFRendererContext, rect: CGRect) {
@@ -188,10 +189,10 @@ public extension PDF {
             fatalError()
         }
 
-        public var desiredSize: CGSize {
+        public func desiredSize(boundedBy bound: CGSize) -> CGSize {
             CGSize(
-                width: width ?? content.desiredSize.width,
-                height: height ?? content.desiredSize.height
+                width: width ?? content.desiredSize(boundedBy: bound).width,
+                height: height ?? content.desiredSize(boundedBy: bound).height
             )
         }
 
@@ -236,7 +237,7 @@ public extension PDF {
             fatalError()
         }
 
-        public var desiredSize: CGSize {
+        public func desiredSize(boundedBy bound: CGSize) -> CGSize {
             .zero
         }
 
@@ -258,8 +259,8 @@ public extension PDF {
         public var body: Never {
             fatalError()
         }
-
-        public var desiredSize: CGSize {
+        
+        public func desiredSize(boundedBy bound: CGSize) -> CGSize {
             CGSize(width: CGFloat.infinity, height: .infinity)
         }
 
