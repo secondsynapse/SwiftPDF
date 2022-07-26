@@ -28,7 +28,7 @@ public extension PDF {
                     width: .infinity,
                     height: partialResult.height + item.desiredSize(
                         boundedBy: CGSize(width: bound.width, height: bound.height - partialResult.height)
-                    ).width
+                    ).height
                 )
             }
         }
