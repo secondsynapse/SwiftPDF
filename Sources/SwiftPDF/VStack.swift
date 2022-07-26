@@ -23,7 +23,7 @@ public extension PDF {
         }
 
         public func desiredSize(boundedBy bound: CGSize) -> CGSize {
-            items.reduce(CGSize(width: 0, height: CGFloat.infinity)) { partialResult, item in
+            items.reduce(CGSize(width: CGFloat.infinity, height: 0)) { partialResult, item in
                 CGSize(
                     width: .infinity,
                     height: partialResult.height + item.desiredSize(
