@@ -12,7 +12,7 @@ public struct PDFCreator<Content> where Content : Drawable {
     var creator: String = ""
     var author: String = Bundle.main.bundleIdentifier ?? ""
     var title: String = ""
-    var size: CGSize = CGSize(width: 8.27 * 72.0, height: 11.69 * 72.0) // A4 Size is Default
+    public private(set) var size: CGSize = CGSize(width: 8.27 * 72.0, height: 11.69 * 72.0) // A4 Size is Default
     var content: Content
 
     public init(

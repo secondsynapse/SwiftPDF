@@ -10,12 +10,20 @@ import PDFKit
 
 public extension PDF {
     struct VStack: Drawable {
+        public enum Alignment {
+            case left
+            case right
+            case center
+        }
+
         var spacing: CGFloat = 0
+        var alignment: Alignment
         var items: [AnyDrawable]
 
-        public init(spacing: CGFloat = 0, @DrawableCollectionBuilder items: () -> [AnyDrawable]) {
+        public init(spacing: CGFloat = 0, alignment: Alignment = .left, @DrawableCollectionBuilder items: () -> [AnyDrawable]) {
             self.spacing = spacing
             self.items = items()
+            self.alignment = alignment
         }
 
         public var body: Never {
@@ -59,15 +67,23 @@ public extension PDF {
             var startingY: CGFloat = rect.origin.y
 
             for item in items {
+                let itemDesiredSize = item.desiredSize(boundedBy: CGSize(width: rect.width, height: rect.height - (startingY - rect.minY)))
+                let x: CGFloat
+
+                switch alignment {
+                case .left:
+                    x = rect.origin.x
+                case .right:
+                    x = rect.origin.x + rect.width - itemDesiredSize.width
+                case .center:
+                    x = (rect.origin.x + rect.width - itemDesiredSize.width) / 2
+                }
+
                 let itemRect = CGRect(
-                    x: rect.origin.x,
+                    x: x,
                     y: startingY,
                     width: rect.width,
-                    height: item.desiredSize(
-                        boundedBy: CGSize(width: rect.width, height: rect.height - (startingY - rect.minY))
-                    ).height == .infinity ? naturalHeight : item.desiredSize(
-                        boundedBy: CGSize(width: rect.width, height: rect.height - (startingY - rect.minY))
-                    ).height
+                    height: itemDesiredSize.height == .infinity ? naturalHeight : itemDesiredSize.height
                 )
 
                 item.draw(in: context, rect: itemRect)
